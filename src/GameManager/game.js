@@ -57,7 +57,7 @@ export const sendMessage = async (req, ws, game) => {
   const user = await getUserByAcessToken(accessToken)
   game.chat.push(`${user.username}: ${req.message}`)
 
-  if (game.chat.chat.length > 5) {
+  while (game.chat.chat.length > 5) {
     game.chat.shift()
   }
 
