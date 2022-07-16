@@ -3,6 +3,8 @@ import { Router } from 'express'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
+import { getUserByAcessToken } from '../ultils/getUserByAcessToken.js'
+
 const saltRounds = 12
 
 const prisma = new PrismaClient()
@@ -62,6 +64,20 @@ userRoutes.post('/login', async (req, res) => {
   const accessToken = createAccessToken(user.id)
 
   return res.json({ accessToken })
+})
+
+userRoutes.get('/me', async (req, res) => {
+  const accessToken = req.headers.authorization.replace('Bearer ', '')
+
+  const user = await getUserByAcessToken(accessToken)
+
+  if (!user) {
+    return res.json({ error: 'Invalid access token' })
+  }
+
+  delete user.password
+
+  return res.json({ user })
 })
 
 export { userRoutes }
