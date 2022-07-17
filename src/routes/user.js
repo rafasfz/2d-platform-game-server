@@ -15,7 +15,7 @@ const createAccessToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_PRIVATE_KEY)
 }
 
-userRoutes.post('/user', async (req, res) => {
+userRoutes.post('/users', async (req, res) => {
   const { name, email, username, password } = req.body
 
   const passwordHash = bcrypt.hashSync(password, saltRounds)

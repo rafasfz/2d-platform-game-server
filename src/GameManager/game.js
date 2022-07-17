@@ -3,21 +3,23 @@ import { getUserByAcessToken } from '../ultils/getUserByAcessToken.js'
 
 export const createGame = async (req, ws) => {
   const { accessToken } = req
+  console.log(req)
   const user = await getUserByAcessToken(accessToken)
+
   const player = {
     id: user.id,
     username: user.username,
-    life: 1000,
+    life: 3,
     score: 0,
     direction: 'right',
-    position: {
-      x: 0,
-      y: 0,
-    },
+    x: -4.230389,
+    y: -2.714,
     ws,
     isJumping: false,
-    isShooting: false,
+    isFiring: false,
     isWalking: false,
+    isHost: true,
+    velocityY: 0,
   }
 
   return {
@@ -35,17 +37,18 @@ export const joinGame = async (req, ws, game) => {
   const player = {
     id: user.id,
     username: user.username,
-    life: 1000,
+    life: 3,
     score: 0,
     direction: 'right',
-    position: {
-      x: 0,
-      y: 0,
-    },
+    x: -2.8,
+    y: -2.714,
+
     ws,
     isJumping: false,
-    isShooting: false,
+    isFiring: false,
     isWalking: false,
+    isHost: false,
+    velocityY: 0,
   }
   game.players.push(player)
   game.chat.push(`${user.username} has joined the game.`)
@@ -61,6 +64,34 @@ export const sendMessage = async (req, ws, game) => {
     game.chat.shift()
   }
 
+  return game
+}
+
+export const reconnectPlayer = async (req, ws, game) => {
+  const { accessToken } = req
+  const user = await getUserByAcessToken(accessToken)
+  const player = game.players.find((player) => player.id === user.id)
+  player.wsPlayer = ws
+  return game
+}
+
+export const reconnectPartner = async (req, ws, game) => {
+  const { accessToken } = req
+  const user = await getUserByAcessToken(accessToken)
+  const player = game.players.find((player) => player.id === user.id)
+  player.wsPartner = ws
+
+  return game
+}
+
+export const updatePlayer = async (req, ws, game) => {
+  const { accessToken } = req
+  const user = await getUserByAcessToken(accessToken)
+  const player = game.players.find((player) => player.id === user.id)
+  player.isJumping = req.isJumping
+  player.isFiring = req.isFiring
+  player.horizontalAxisIntensity = req.horizontalAxisIntensity
+  player.velocityY = req.velocityY
   return game
 }
 
