@@ -92,6 +92,18 @@ export const updatePlayer = async (req, ws, game) => {
   player.isFiring = req.isFiring
   player.horizontalAxisIntensity = req.horizontalAxisIntensity
   player.velocityY = req.velocityY
+  player.x = req.x
+  player.y = req.y
   return game
+}
+
+export const sendMessageChat = async (req, ws, chat) => {
+  const { accessToken } = req
+  const user = await getUserByAcessToken(accessToken)
+  chat.push(`${user.username}: ${req.message}`)
+  while (chat.length > 5) {
+    chat.shift()
+  }
+  return chat
 }
 

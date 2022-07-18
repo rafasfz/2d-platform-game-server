@@ -1,4 +1,5 @@
 import { WebSocketServer } from 'ws'
+import { getUserByAcessToken } from '../ultils/getUserByAcessToken.js'
 import {
   createGame,
   joinGame,
@@ -6,14 +7,20 @@ import {
   reconnectPlayer,
   reconnectPartner,
   updatePlayer,
+  sendMessageChat,
 } from './game.js'
 
 const lobby = []
+
+const lobbyPlayers = []
+let chat = []
 
 const onMessage = async (ws, data) => {
   const requestData = JSON.parse(data)
   let game
   let gameIndex
+  let sendPlayerIndex
+  let requestPlayer
   switch (requestData.type) {
     case 'CREATE_GAME':
       console.log('CREATE_GAME call')
@@ -95,7 +102,8 @@ const onMessage = async (ws, data) => {
       })
       break
     case 'GET_LOBBY':
-      ws.send(JSON.stringify({ type: 'LOBBY', lobby }))
+      ws.send(JSON.stringify({ type: 'LOBBY', lobby, chat }))
+      lobbyPlayers.push(ws)
 
       break
     case 'GET_GAME_STATS':
@@ -155,6 +163,8 @@ const onMessage = async (ws, data) => {
             isHost: playerData.isHost,
             isJumping: playerData.isJumping,
             horizontalAxisIntensity: playerData.horizontalAxisIntensity,
+            x: playerData.x,
+            y: playerData.y,
           }
         })
 
@@ -171,6 +181,8 @@ const onMessage = async (ws, data) => {
                   playersToSend[1].horizontalAxisIntensity,
                 isFiring: playersToSend[1].isFiring,
                 isJumping: playersToSend[1].isJumping,
+                x: playersToSend[1].x,
+                y: playersToSend[1].y,
               })
             )
           } else {
@@ -185,10 +197,34 @@ const onMessage = async (ws, data) => {
                   playersToSend[0].horizontalAxisIntensity,
                 isFiring: playersToSend[0].isFiring,
                 isJumping: playersToSend[0].isJumping,
+                x: playersToSend[0].x,
+                y: playersToSend[0].y,
               })
             )
           }
         }
+      })
+      break
+    case 'PLAYER_DYING':
+      gameIndex = lobby.findIndex((game) => game.id === requestData.gameId)
+      if (gameIndex === -1) {
+        ws.send(JSON.stringify({ type: 'GAME_NOT_FOUND' }))
+        return
+      }
+      requestPlayer = await getUserByAcessToken(requestData.accessToken)
+      sendPlayerIndex =
+        lobby[gameIndex].players[0].id === requestPlayer.id ? 1 : 0
+      if (lobby[gameIndex].players[sendPlayerIndex].wsPartner) {
+        lobby[gameIndex].players[sendPlayerIndex].wsPartner.send(
+          JSON.stringify({ type: 'PARTNER_DYING' })
+        )
+      }
+
+      break
+    case 'SEND_MESSAGE_CHAT':
+      chat = await sendMessageChat(requestData, ws, chat)
+      lobbyPlayers.forEach((lobbyPlayerWs) => {
+        lobbyPlayerWs.send(JSON.stringify({ type: 'MESSAGE_CHAT', chat }))
       })
       break
   }
