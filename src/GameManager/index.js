@@ -139,13 +139,63 @@ const onMessage = async (ws, data) => {
         return
       }
       lobby[gameIndex] = await updatePlayer(requestData, ws, lobby[gameIndex])
+
+      lobby[gameIndex].players.forEach((player) => {
+        const gamePlayersData = [...lobby[gameIndex].players]
+        const playersToSend = gamePlayersData.map((playerData) => {
+          return {
+            id: playerData.id,
+            username: playerData.username,
+            x: playerData.x,
+            y: playerData.y,
+            life: playerData.life,
+            score: playerData.score,
+            isFiring: playerData.isFiring,
+            isShooting: playerData.isShooting,
+            isHost: playerData.isHost,
+            isJumping: playerData.isJumping,
+            horizontalAxisIntensity: playerData.horizontalAxisIntensity,
+          }
+        })
+
+        if (player.wsPartner) {
+          if (player.id === playersToSend[0].id) {
+            player.wsPartner.send(
+              JSON.stringify({
+                type: 'GAME_STATS',
+                game: {
+                  ...game,
+                  players: playersToSend,
+                },
+                horizontalAxisIntensity:
+                  playersToSend[1].horizontalAxisIntensity,
+                isFiring: playersToSend[1].isFiring,
+                isJumping: playersToSend[1].isJumping,
+              })
+            )
+          } else {
+            player.wsPartner.send(
+              JSON.stringify({
+                type: 'GAME_STATS',
+                game: {
+                  ...game,
+                  players: playersToSend,
+                },
+                horizontalAxisIntensity:
+                  playersToSend[0].horizontalAxisIntensity,
+                isFiring: playersToSend[0].isFiring,
+                isJumping: playersToSend[0].isJumping,
+              })
+            )
+          }
+        }
+      })
       break
   }
 }
 
 setInterval(() => {
   lobby.forEach((game) => {
-    console.log(game)
     game.players.forEach((player) => {
       const gamePlayersData = [...game.players]
       const playersToSend = gamePlayersData.map((playerData) => {
@@ -170,36 +220,6 @@ setInterval(() => {
             game: { ...game, players: playersToSend },
           })
         )
-      }
-
-      if (player.wsPartner) {
-        if (player.id === playersToSend[0].id) {
-          player.wsPartner.send(
-            JSON.stringify({
-              type: 'GAME_STATS',
-              game: {
-                ...game,
-                players: playersToSend,
-              },
-              horizontalAxisIntensity: playersToSend[1].horizontalAxisIntensity,
-              isFiring: playersToSend[1].isFiring,
-              isJumpingInput: playersToSend[1].isJumpingInput,
-            })
-          )
-        } else {
-          player.wsPartner.send(
-            JSON.stringify({
-              type: 'GAME_STATS',
-              game: {
-                ...game,
-                players: playersToSend,
-              },
-              horizontalAxisIntensity: playersToSend[0].horizontalAxisIntensity,
-              isFiring: playersToSend[0].isFiring,
-              isJumpingInput: playersToSend[0].isJumpingInput,
-            })
-          )
-        }
       }
     })
   })
