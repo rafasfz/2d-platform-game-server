@@ -256,6 +256,8 @@ const onMessage = async (ws, data) => {
           JSON.stringify({
             type: 'PARTNER_FIRING',
             isFiring: requestData.isFiring,
+            x: requestData.x,
+            y: requestData.y,
           })
         )
       }
