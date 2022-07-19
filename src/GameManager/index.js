@@ -23,11 +23,9 @@ const onMessage = async (ws, data) => {
   let requestPlayer
   switch (requestData.type) {
     case 'CREATE_GAME':
-      console.log('CREATE_GAME call')
       game = await createGame(requestData, ws)
       lobby.push(game)
       ws.send(JSON.stringify({ type: 'GAME_CREATED', game, gameId: game.id }))
-      console.log('GAME_CREATED success')
       break
     case 'JOIN_GAME':
       gameIndex = lobby.findIndex((game) => game.id === requestData.gameId)
@@ -58,7 +56,6 @@ const onMessage = async (ws, data) => {
       }
 
       lobby[gameIndex] = await joinGame(requestData, ws, lobby[gameIndex])
-      console.log('JOINED')
       ws.send(
         JSON.stringify({
           type: 'GAME_JOINED',
@@ -227,6 +224,77 @@ const onMessage = async (ws, data) => {
         lobbyPlayerWs.send(JSON.stringify({ type: 'MESSAGE_CHAT', chat }))
       })
       break
+    case 'PLAYER_MOVE':
+      gameIndex = lobby.findIndex((game) => game.id === requestData.gameId)
+      if (gameIndex === -1) {
+        ws.send(JSON.stringify({ type: 'GAME_NOT_FOUND' }))
+        return
+      }
+      sendPlayerIndex =
+        lobby[gameIndex].players[0].id === requestData.userId ? 1 : 0
+      if (lobby[gameIndex].players[sendPlayerIndex].wsPartner) {
+        lobby[gameIndex].players[sendPlayerIndex].wsPartner.send(
+          JSON.stringify({
+            type: 'PARTNER_MOVE',
+            horizontalAxisIntensity: requestData.horizontalAxisIntensity,
+            x: requestData.x,
+            y: requestData.y,
+          })
+        )
+      }
+      break
+    case 'PLAYER_FIRING':
+      gameIndex = lobby.findIndex((game) => game.id === requestData.gameId)
+      if (gameIndex === -1) {
+        ws.send(JSON.stringify({ type: 'GAME_NOT_FOUND' }))
+        return
+      }
+      sendPlayerIndex =
+        lobby[gameIndex].players[0].id === requestData.userId ? 1 : 0
+      if (lobby[gameIndex].players[sendPlayerIndex].wsPartner) {
+        lobby[gameIndex].players[sendPlayerIndex].wsPartner.send(
+          JSON.stringify({
+            type: 'PARTNER_FIRING',
+            isFiring: requestData.isFiring,
+          })
+        )
+      }
+      break
+    case 'PLAYER_JUMPING':
+      gameIndex = lobby.findIndex((game) => game.id === requestData.gameId)
+      if (gameIndex === -1) {
+        ws.send(JSON.stringify({ type: 'GAME_NOT_FOUND' }))
+        return
+      }
+      sendPlayerIndex =
+        lobby[gameIndex].players[0].id === requestData.userId ? 1 : 0
+      if (lobby[gameIndex].players[sendPlayerIndex].wsPartner) {
+        lobby[gameIndex].players[sendPlayerIndex].wsPartner.send(
+          JSON.stringify({
+            type: 'PARTNER_JUMPING',
+            isJumping: requestData.isJumping,
+            horizontalAxisIntensity: requestData.horizontalAxisIntensity,
+            x: requestData.x,
+            y: requestData.y,
+          })
+        )
+      }
+      break
+    case 'PLAYER_WON':
+      gameIndex = lobby.findIndex((game) => game.id === requestData.gameId)
+      if (gameIndex === -1) {
+        ws.send(JSON.stringify({ type: 'GAME_NOT_FOUND' }))
+        return
+      }
+      sendPlayerIndex =
+        lobby[gameIndex].players[0].id === requestData.userId ? 1 : 0
+      if (lobby[gameIndex].players[sendPlayerIndex].wsPartner) {
+        lobby[gameIndex].players[sendPlayerIndex].wsPartner.send(
+          JSON.stringify({
+            type: 'PARTNER_WON',
+          })
+        )
+      }
   }
 }
 

@@ -63,7 +63,7 @@ userRoutes.post('/login', async (req, res) => {
 
   const accessToken = createAccessToken(user.id)
 
-  return res.json({ accessToken })
+  return res.json({ accessToken, userId: user.id })
 })
 
 userRoutes.get('/me', async (req, res) => {

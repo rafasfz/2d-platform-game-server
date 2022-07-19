@@ -3,7 +3,6 @@ import { getUserByAcessToken } from '../ultils/getUserByAcessToken.js'
 
 export const createGame = async (req, ws) => {
   const { accessToken } = req
-  console.log(req)
   const user = await getUserByAcessToken(accessToken)
 
   const player = {
