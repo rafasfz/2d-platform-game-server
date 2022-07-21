@@ -4,9 +4,7 @@ Crie um `.env` na raiz do projeto, usando como base o `.env.example` e coloque u
 
 ```bash
     # Instala as dependências do projeto
-    yarn
-    # ou
-    npm install
+    yarn # ou npm install
 
     # Roda as migrations
     yarn prisma db push # ou npx prisma db push
